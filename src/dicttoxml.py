@@ -3,6 +3,18 @@ class dicttoxml(object):
     def __init__(self):
         pass
 
+    def xml_array(self, input):
+        keys = list(input.keys())
+
+        tags = []
+
+        for key in keys:
+            value = input[key] if input[key] is not None else ''
+
+            tags.extend([f'{subtag}' for subtag in self.xml({key: value})])
+
+        return tags
+
     def xml(self, input):
         keys = list(input.keys())
 
@@ -17,44 +29,46 @@ class dicttoxml(object):
             if key[0] == '@':
                 continue
 
-            if not isinstance(value, dict):
-                tags.append(f'<{key}>{value}</{key}>')
-                continue
-
             if isinstance(value, list):
-                # Check if text present
-
                 subtags = []
                 for item in value:
-                    subtags.append(self.xml(item))
+                    subtags.extend(self.xml_array({key: item}))
 
-                subtags = [f'\t{subtag}' for subtag in subtags]
+                # subtags = [f'\t{subtag}' for subtag in subtags]
 
                 tags.extend(subtags)
                 continue
 
-            subkeys = list(value.keys())
+            if isinstance(value, dict):
+                subkeys = list(value.keys())
 
-            text = ''
+                text = ''
 
-            if '#text' in subkeys:
-                text = value['#text']
-                subkeys.remove('#text')
+                if '#text' in subkeys:
+                    text = value['#text']
+                    subkeys.remove('#text')
 
-            attributes = ['']
-            for subkey in subkeys:
-                if subkey[0] == '@':
-                    attributes.append(f'{subkey[1:]}="{value[subkey]}"')
-                    subkeys.remove(subkey)
+                attributes = ['']
+                for subkey in list(value.keys()):
+                    if subkey[0] == '@':
+                        attributes.append(f'{subkey[1:]}="{value[subkey]}"')
+                        subkeys.remove(subkey)
 
-            attributes = ' '.join(attributes)
+                attributes = ' '.join(attributes)
 
-            if not subkeys:
-                tags.append(f'<{key}{attributes}>{text}</{key}>')
+                if not subkeys:
+                    tags.append(f'<{key}{attributes}>{text}</{key}>')
+                    continue
+
+                tags.append(f'<{key}{attributes}>{text}')
+                tags.extend([f'\t{subtag}' for subtag in self.xml(value)])
+                tags.append(f'</{key}>')
+
+            if not isinstance(value, dict):
+                tags.append(f'<{key}>{value}</{key}>')
                 continue
 
-            tags.append(f'<{key}{attributes}>{text}')
-            tags.extend([f'\t{subtag}' for subtag in self.xml(value)])
-            tags.append(f'</{key}>')
-
         return tags
+
+    def return_xml(self, input):
+        return '<?xml version="1.0"?>\n'+'\n'.join(self.xml(input))
