@@ -268,14 +268,10 @@ def test_multi_level_xmltodict(fixture):
     ]
 
     dict = xmltodict.parse('\n'.join(expected_output))
-    pprint(dict)
 
     result = fixture.xml(dict)
 
     assert result == expected_output
-
-    print('\n')
-    print('\n'.join(result))
 
 # @pytest.mark.skip
 def test_return_xml_w_file(fixture):
